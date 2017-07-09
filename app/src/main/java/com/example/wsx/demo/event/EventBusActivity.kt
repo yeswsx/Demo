@@ -11,65 +11,111 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
 class EventBusActivity : AppCompatActivity(), View.OnClickListener {
+    var mMessage : StringBuffer = StringBuffer()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_event_bus)
-        btn_eat.setOnClickListener(this)
-        btn_sleep.setOnClickListener(this)
-        btn_sport.setOnClickListener(this)
-        btn_work.setOnClickListener(this)
+
+        btn_posting.setOnClickListener(this)
+        btn_background.setOnClickListener(this)
+        btn_async.setOnClickListener(this)
+        btn_main.setOnClickListener(this)
+    }
+
+    override fun onClick(v: View?) {
+        when (v?.id){
+            R.id.btn_posting -> { post(PostingEvent()) }
+            R.id.btn_background -> { post(BackgroundEvent()) }
+            R.id.btn_async -> {post(AsyncEvent())}
+            R.id.btn_main -> {post(MainEvent())}
+        }
     }
 
     override fun onStart() {
         super.onStart()
+        /**
+         * 还没注册前先发送一个粘性广播
+         */
+        showMessage("注册之前post", StickyEvent())
+        EventBus.getDefault().postSticky(StickyEvent())
+
+        /**
+         * 注册订阅者
+         */
         EventBus.getDefault().register(this)
     }
 
     override fun onStop() {
         super.onStop()
+        /**
+         * 取消注册
+         */
         EventBus.getDefault().unregister(this)
     }
 
-    override fun onClick(v: View?) {
-        when (v?.id){
-            R.id.btn_eat -> {EventBus.getDefault().post(EatEvent())}
-            R.id.btn_sleep -> {EventBus.getDefault().post(SleepEvent())}
-            R.id.btn_sport -> {EventBus.getDefault().post(SportEvent())}
-            R.id.btn_work -> {EventBus.getDefault().post(WorkEvent())}
-        }
+    /**
+     * 发布事件
+     */
+    private fun post(obj: kotlin.Any){
+        mMessage.setLength(0)
+        /**
+         * UI线程发出
+         */
+        showMessage("post", obj)
+        EventBus.getDefault().post(obj)
+
+        /**
+         * 子线程发出
+         */
+        Thread(Runnable {
+            showMessage("post", obj)
+            EventBus.getDefault().post(obj)
+        }).start()
+    }
+
+    /**
+     * 事件订阅
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN, priority = 2)
+    fun onEventP2(event : MainEvent){
+        showMessage("run 优先级高",event)
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN, priority = 1)
+    fun onEventP1(event : MainEvent){
+        showMessage("run 优先级低", event)
     }
 
     @Subscribe(threadMode = ThreadMode.POSTING)
-    fun onEvent(event : EatEvent){
-        showToast(event.execute() +", on thread:"+Thread.currentThread().name);
+    fun onEvent(event : PostingEvent){
+        showMessage("run",event)
     }
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
-    fun onEvent(event : SleepEvent){
-        showToast(event.execute() +", on thread:"+Thread.currentThread().name);
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, priority = 10)
-    fun onEventAm(event : WorkEvent){
-        showToast(event.execute() +" am, on thread:"+Thread.currentThread().name);
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN, priority = 9)
-    fun onEventPm(event : WorkEvent){
-        showToast(event.execute() +" pm, on thread:"+Thread.currentThread().name);
+    fun onEvent(event : BackgroundEvent){
+        showMessage("run",event)
     }
 
     @Subscribe(threadMode = ThreadMode.ASYNC)
-    fun event(event : SportEvent){
-        showToast(event.execute() +", on thread:"+Thread.currentThread().name);
+    fun onEvent(event : AsyncEvent){
+        showMessage("run",event)
     }
 
-    fun showToast(message: String) {
-        val msg = "${text_info.text} \n ${message}"
+    @Subscribe(threadMode = ThreadMode.POSTING, sticky = true)
+    fun onEvent(event: StickyEvent){
+        showMessage( "run", event)
+    }
+
+    fun showMessage( message: String, obj: Any) {
+        synchronized(this){
+            mMessage.append("${message} ${obj.javaClass.simpleName} -- on: ${Thread.currentThread().name}")
+            mMessage.append("\n")
+        }
+
         if (Looper.getMainLooper() == Looper.myLooper()){
-            text_info.setText(msg)
+            text_info.setText(mMessage)
         }else{
-            text_info.post({text_info.setText(msg)})
+            text_info.post({text_info.setText(mMessage)})
         }
     }
 }
