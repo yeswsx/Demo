@@ -5,5 +5,8 @@ package com.example.wsx.demo.event;
  */
 
 public class AsyncEvent {
-
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

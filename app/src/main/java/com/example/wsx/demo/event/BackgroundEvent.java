@@ -5,4 +5,8 @@ package com.example.wsx.demo.event;
  */
 
 public class BackgroundEvent {
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

@@ -5,4 +5,13 @@ package com.example.wsx.demo.event;
  */
 
 public class StickyEvent {
+    public String msg;
+    public StickyEvent(String msg){
+        this.msg = msg;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName()+"["+msg+"]";
+    }
 }

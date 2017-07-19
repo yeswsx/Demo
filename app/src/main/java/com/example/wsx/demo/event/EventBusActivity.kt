@@ -36,8 +36,10 @@ class EventBusActivity : AppCompatActivity(), View.OnClickListener {
         /**
          * 还没注册前先发送一个粘性广播
          */
-        showMessage("注册之前post", StickyEvent())
-        EventBus.getDefault().postSticky(StickyEvent())
+        showMessage("注册之前post", StickyEvent(""))
+        EventBus.getDefault().postSticky(StickyEvent("1"))
+        EventBus.getDefault().postSticky(StickyEvent("2"))
+        EventBus.getDefault().postSticky(StickyEvent("3"))
 
         /**
          * 注册订阅者
@@ -65,7 +67,7 @@ class EventBusActivity : AppCompatActivity(), View.OnClickListener {
         EventBus.getDefault().post(obj)
 
         /**
-         * 子线程发出
+         * 工作线程发出
          */
         Thread(Runnable {
             showMessage("post", obj)
@@ -108,7 +110,7 @@ class EventBusActivity : AppCompatActivity(), View.OnClickListener {
 
     fun showMessage( message: String, obj: Any) {
         synchronized(this){
-            mMessage.append("${message} ${obj.javaClass.simpleName} -- on: ${Thread.currentThread().name}")
+            mMessage.append("${message} ${obj}-- on: ${Thread.currentThread().name}")
             mMessage.append("\n")
         }
 

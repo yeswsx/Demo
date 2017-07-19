@@ -5,5 +5,8 @@ package com.example.wsx.demo.event;
  */
 
 public class MainEvent {
-
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }
